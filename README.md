@@ -13,4 +13,4 @@ IntelX monitors the dark web for ransomware activity.
 - Multithreaded scrapping
 - Custom and independent scrappers for each ransomware group
 
-_* ...still under development*_
+_...still under development_
