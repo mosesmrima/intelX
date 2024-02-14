@@ -1,30 +1,16 @@
-const fs = require('fs');
 const cheerio = require('cheerio');
-const path = require('path');
 
-function main() {
-    let list_div = [];
-
-    fs.readdirSync('source').forEach(filename => {
-        try {
-            if (filename.startsWith(path.basename(__filename, '.js') + '-')) {
-                let html_doc = 'source/' + filename;
-                let file = fs.readFileSync(html_doc, 'utf8');
-                let $ = cheerio.load(file);
-                let divs_name = $('div.card');
-                divs_name.each((i, div) => {
-                    let title = $(div).find('div.title').text().trim();
-                    let description = $(div).find('div.text').text().trim();
-                    let link = $(div).find('a').attr('href');
-                    list_div.push({"title" : title, "description" : description, 'link': link, 'slug': filename});
-                });
-            }
-        } catch (err) {
-            console.log("Failed during : " + filename);
-        }
+function parseHTMLContent(htmlContent) {
+    let parsedItems = [];
+    let $ = cheerio.load(htmlContent);
+    let divsName = $('div.card');
+    divsName.each((i, div) => {
+        let title = $(div).find('div.title').first().text().trim();
+        let description = $(div).find('div.text').first().text().trim();
+        let link = $(div).find('a').first().attr('href');
+        parsedItems.push({'title': title, 'description': description, 'link': link});
     });
-    console.log(list_div);
-    return list_div;
+    return parsedItems;
 }
 
-main();
+module.exports = parseHTMLContent;
