@@ -11,7 +11,7 @@
   "dependencies": {
     "@nextui-org/react": "^2.2.9",
     "@tremor/react": "^3.11.1",
-    "axios": "^1.5.1",
+    "axios": "^1.6.5",
     "bull": "^4.11.4",
     "bullmq": "^4.13.3",
     "cheerio": "^1.0.0-rc.12",
@@ -33,7 +33,7 @@
     "winston": "^3.11.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.39.0",
+    "@playwright/test": "^1.41.2",
     "@types/node": "^20.9.0",
     "autoprefixer": "^10",
     "eslint": "^8",
