@@ -1,25 +1,22 @@
-const fs = require('fs');
 const cheerio = require('cheerio');
 
-function main() {
-    let listDiv = [];
+function parseHTML(htmlContent) {
+    let posts = [];
 
-    fs.readdirSync('source').forEach(filename => {
-        if (filename.startsWith(__filename.split('.')[0]+'-')) {
-            let htmlDoc = 'source/' + filename;
-            let data = fs.readFileSync(htmlDoc, 'utf8');
-            let $ = cheerio.load(data);
-            let divsName = $('h4.post-announce-name');
+    try {
+        let $ = cheerio.load(htmlContent);
+        let divsName = $('h4.post-announce-name');
 
-            divsName.each((i, div) => {
-                listDiv.push($(div).text().trim());
-            });
-        }
-    });
+        divsName.each((i, div) => {
+            posts.push($(div).text().trim());
+        });
 
-    listDiv = [...new Set(listDiv)]; // remove duplicates
-    console.log(listDiv);
-    return listDiv;
+        posts = [...new Set(posts)];
+    } catch (err) {
+        console.error(err);
+    }
+
+    return posts;
 }
 
-main();
+module.exports = parseHTML;

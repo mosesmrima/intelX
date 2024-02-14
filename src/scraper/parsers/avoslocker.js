@@ -1,27 +1,19 @@
-const fs = require('fs');
 const cheerio = require('cheerio');
 
-function main() {
-    let listDiv = [];
-
-    fs.readdirSync('source').forEach(filename => {
-        try {
-            if (filename.startsWith(__filename.split('.')[0]+'-')) {
-                let htmlDoc = fs.readFileSync('source/'+filename, 'utf8');
-                let $ = cheerio.load(htmlDoc);
-                let divsName = $('div.card');
-                divsName.each((i, div) => {
-                    let title = $(div).find('h5.card-brand').text().trim();
-                    let description = $(div).find('div.card-desc').text().trim();
-                    listDiv.push({"title": title, "description": description});
-                });
-            }
-        } catch (error) {
-            console.log("Failed during : " + filename);
-        }
-    });
-    console.log(listDiv);
-    return listDiv;
+function parseHTML(htmlContent) {
+    let posts = [];
+    try {
+        let $ = cheerio.load(htmlContent);
+        let divsName = $('div.card');
+        divsName.each((i, div) => {
+            let title = $(div).find('h5.card-brand').text().trim();
+            let description = $(div).find('div.card-desc').text().trim();
+            posts.push({"title": title, "description": description, discovered: new Date()});
+        });
+    } catch(err) {
+        console.log(err);
+    }
+    return posts;
 }
 
-main();
+module.exports = parseHTML

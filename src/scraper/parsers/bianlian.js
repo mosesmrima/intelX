@@ -1,7 +1,7 @@
 const fs = require('fs');
 const cheerio = require('cheerio');
 
-function main() {
+export default function main() {
     let listDiv = [];
 
     fs.readdirSync('source').forEach(filename => {
