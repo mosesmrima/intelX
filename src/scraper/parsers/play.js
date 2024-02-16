@@ -1,35 +1,29 @@
-const fs = require('fs');
 const cheerio = require('cheerio');
 
-function main() {
+function parseHTMLContent(htmlContent) {
     let listDiv = [];
+    const $ = cheerio.load(htmlContent);
 
-    fs.readdirSync('source').forEach(filename => {
+    $('th.News').each((i, div) => {
+        let title = $(div).next().text().trim();
+        let description = ""; // Description remains empty as per original logic
+        let link = null;
+
         try {
-            if (filename.startsWith(__filename.split('.')[0] + '-')) {
-                let htmlDoc = 'source/' + filename;
-                let file = fs.readFileSync(htmlDoc, 'utf8');
-                let $ = cheerio.load(file);
-                let divsName = $('th.News');
-                divsName.each((i, div) => {
-                    let title = $(div).next().text().trim();
-                    let description = "";
-                    let link = null;
-                    try {
-                        link = $(div).attr('onclick').split("'")[1];
-                        link = 'topic.php?id=' + link;
-                    } catch (error) {
-                        console.log(error);
-                    }
-                    listDiv.push({ 'title': title, 'description': description, 'link': link, 'slug': filename });
-                });
+            // Attempt to extract 'onclick' attribute and parse it for the link
+            let onclickValue = $(div).attr('onclick');
+            if (onclickValue) {
+                let linkPart = onclickValue.split("'")[1];
+                link = 'topic.php?id=' + linkPart;
             }
         } catch (error) {
-            console.log("Failed during : " + filename);
+            console.error("Error extracting link:", error);
         }
+
+        listDiv.push({ 'title': title, 'description': description, 'link': link });
     });
-    console.log(listDiv);
+
     return listDiv;
 }
 
-main();
+module.exports = parseHTMLContent;
