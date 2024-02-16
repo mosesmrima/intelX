@@ -1,37 +1,26 @@
-const fs = require('fs');
-const path = require('path');
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+const cheerio = require('cheerio');
 
-async function main() {
-    let list_div = [];
+function parseHTMLContent(htmlContent) {
+    let listDiv = [];
+    const $ = cheerio.load(htmlContent);
+    const divsName = $('tr.fw-normal');
 
-    const files = fs.readdirSync('source');
-    for (const filename of files) {
-        if (filename.startsWith(path.basename(__filename, '.js') + '-')) {
-            const html_doc = path.join('source', filename);
-            const file = fs.readFileSync(html_doc, 'utf-8');
-            const dom = new JSDOM(file);
-            const document = dom.window.document;
-            const divs_name = document.querySelectorAll('tr.fw-normal');
-            for (const div of divs_name) {
-                for (const item of div.querySelector('td').childNodes) {
-                    const text = item.textContent.trim();
-                    if (text === '') {
-                        continue;
-                    }
-                    list_div.push(text);
-                }
+    divsName.each((index, element) => {
+        $(element).find('td').contents().each((idx, item) => {
+            const text = $(item).text().trim();
+            if (text !== '') {
+                listDiv.push(text);
             }
-        }
-    }
-    list_div = [...new Set(list_div)]; // remove duplicates
-    const index = list_div.indexOf('updating');
+        });
+    });
+
+    listDiv = [...new Set(listDiv)];
+    const index = listDiv.indexOf('updating');
     if (index !== -1) {
-        list_div.splice(index, 1); // remove 'updating'
+        listDiv.splice(index, 1);
     }
-    console.log(list_div);
-    return list_div;
+
+    return listDiv;
 }
 
-main();
+module.exports = parseHTMLContent
