@@ -1,33 +1,17 @@
-const fs = require('fs');
-const path = require('path');
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+const cheerio = require('cheerio');
 
-async function main() {
-    let list_div = [];
+function parseHTMLContent(htmlContent) {
+    let listDiv = [];
+    const $ = cheerio.load(htmlContent);
 
-    const files = fs.readdirSync('source');
-    for (let i = 0; i < files.length; i++) {
-        const filename = files[i];
-        try {
-            if (filename.startsWith(path.basename(__filename, '.js') + '-')) {
-                const html_doc = path.join('source', filename);
-                const file = fs.readFileSync(html_doc, 'utf-8');
-                const dom = new JSDOM(file);
-                const divs_name = dom.window.document.querySelectorAll('div.blog-post-content');
-                for (let div of divs_name) {
-                    let title = div.querySelector('h2.blog-post-title').textContent.trim();
-                    let description = div.querySelector('p').textContent.trim();
-                    let link = div.querySelector('a').href;
-                    list_div.push({'title': title, 'description': description, 'link': link, 'slug': filename});
-                }
-            }
-        } catch (error) {
-            console.log("Failed during : " + filename);
-        }
-    }
-    console.log(list_div);
-    return list_div;
+    $('div.blog-post-content').each((i, div) => {
+        let title = $(div).find('h2.blog-post-title').text().trim();
+        let description = $(div).find('p').first().text().trim();
+        let link = $(div).find('a').attr('href');
+        listDiv.push({ 'title': title, 'description': description, 'link': link });
+    });
+
+    return listDiv;
 }
 
-main();
+module.exports = parseHTMLContent;
