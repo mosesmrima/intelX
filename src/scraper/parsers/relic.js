@@ -1,28 +1,16 @@
-const fs = require('fs');
 const cheerio = require('cheerio');
 
-function main() {
-    let list_div = [];
+function parseHTMLContent(htmlContent) {
+    let listDiv = [];
+    const $ = cheerio.load(htmlContent);
 
-    fs.readdirSync('source').forEach(filename => {
-        try {
-            if (filename.startsWith(__filename.split('.')[0]+'-')) {
-                let html_doc = 'source/'+filename;
-                let file = fs.readFileSync(html_doc, 'utf8');
-                let $ = cheerio.load(file);
-                let divs_name = $('div.content');
-                divs_name.each((i, div) => {
-                    let title = $(div).find('div.name').text().trim();
-                    let description = $(div).find('div.description').text().trim();
-                    list_div.push({'title':title, 'description': description});
-                });
-            }
-        } catch (error) {
-            console.log("Failed during : " + filename);
-        }
+    $('div.content').each((i, div) => {
+        let title = $(div).find('div.name').text().trim();
+        let description = $(div).find('div.description').text().trim();
+        listDiv.push({ 'title': title, 'description': description });
     });
-    console.log(list_div);
-    return list_div;
+
+    return listDiv;
 }
 
-main();
+module.exports = parseHTMLContent;
