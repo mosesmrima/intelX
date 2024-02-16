@@ -1,45 +1,40 @@
-const fs = require('fs');
 const cheerio = require('cheerio');
 
-function main() {
-    let list_div = [];
+function parseHTMLContent(htmlContent) {
+    let listDiv = [];
+    const $ = cheerio.load(htmlContent);
 
-    fs.readdirSync('source').forEach(filename => {
+    $('center').each((i, center) => {
         try {
-            if (filename.startsWith(__filename.split('.')[0]+'-')) {
-                let html_doc = 'source/'+filename;
-                let file = fs.readFileSync(html_doc, 'utf8');
-                let $ = cheerio.load(file);
-
-                $('center').each((i, div) => {
-                    try {
-                        let title = $(div).find('p.h1').text();
-                        let description = $(div).find('p.description').text().trim();
-                        list_div.push({"title" : title, "description" : description});
-                    } catch (error) {
-                        // pass
-                    }
-                });
-
-                $('div.item-details').each((i, div) => {
-                    let title = $(div).find('h3').text();
-                    let description = $(div).find('p').text().trim();
-                    list_div.push({"title" : title, "description" : description});
-                });
-
-                $('table').each((i, div) => {
-                    let title = $(div).find('img').attr('src').split('/')[-1].split('.')[0];
-                    let description = $(div).find('p.description').text().trim();
-                    let link = $(div).find('p.textprice').find('a').attr('href');
-                    list_div.push({"title" : title, "description" : description, "link": link, "slug": filename});
-                });
+            const title = $(center).find('p.h1').text().trim();
+            const description = $(center).find('p.description').text().trim();
+            if (title) {
+                listDiv.push({ "title": title, "description": description });
             }
         } catch (error) {
-            console.log("Failed during : " + filename);
+            // Handling error or ignoring if no title or description found
         }
     });
-    console.log(list_div);
-    return list_div;
+
+    $('div.item-details').each((i, item) => {
+        const title = $(item).find('h3').text().trim();
+        const description = $(item).find('p').text().trim();
+        if (title) {
+            listDiv.push({ "title": title, "description": description });
+        }
+    });
+
+    $('table').each((i, table) => {
+        const imgSrc = $(table).find('img').attr('src');
+        const title = imgSrc ? imgSrc.split('/').pop().split('.')[0] : "";
+        const description = $(table).find('p.description').text().trim();
+        const link = $(table).find('p.textprice a').attr('href');
+        if (title) {
+            listDiv.push({ "title": title, "description": description, "link": link });
+        }
+    });
+
+    return listDiv;
 }
 
-main();
+module.exports = parseHTMLContent;
