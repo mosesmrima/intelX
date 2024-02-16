@@ -1,40 +1,30 @@
-const fs = require('fs');
-const path = require('path');
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+const cheerio = require('cheerio');
 
-async function main() {
-    let list_div = [];
+function parseHTMLContent(htmlContent, isDisclosed) {
+    let listDiv = [];
+    const $ = cheerio.load(htmlContent);
 
-    const files = fs.readdirSync('source');
-    for (let i = 0; i < files.length; i++) {
-        const filename = files[i];
-        if (filename.startsWith(path.basename(__filename).split('.')[0]+'-')) {
-            const html_doc = 'source/'+filename;
-            const data = fs.readFileSync(html_doc, 'utf8');
-            const dom = new JSDOM(data);
-            const document = dom.window.document;
-            if (filename.includes('disclosed')) {
-                const jsonpart = document.querySelector('pre').textContent;
-                const data = JSON.parse(jsonpart);
-                for (let entry of data) {
-                    list_div.push({"title": entry['title'].trim(), "description": entry["description"].trim()});
-                }
-            } else {
-                const divs_name = document.querySelectorAll('div.blog-card-info');
-                divs_name.forEach(div => {
-                    const title = div.querySelector('h2').textContent.trim();
-                    let description = null;
-                    if (div.querySelector('p') !== null) {
-                        description = div.querySelector('p').textContent.trim();
-                    }
-                    list_div.push({'title': title, 'description': description});
-                });
-            }
+    if (isDisclosed) {
+        const jsonPart = $('pre').text();
+        try {
+            const data = JSON.parse(jsonPart);
+            data.forEach(entry => {
+                listDiv.push({"title": entry['title'].trim(), "description": entry["description"].trim()});
+            });
+        } catch (e) {
+            console.error("Failed to parse JSON content", e);
         }
+    } else {
+        const divsName = $('div.blog-card-info');
+        divsName.each((i, div) => {
+            const title = $(div).find('h2').text().trim();
+            let description = $(div).find('p').text().trim();
+            if (!description) description = null;
+            listDiv.push({'title': title, 'description': description});
+        });
     }
-    console.log(list_div);
-    return list_div;
+
+    return listDiv;
 }
 
-main();
+module.exports = parseHTMLContent;
