@@ -1,43 +1,28 @@
-const fs = require('fs');
-const path = require('path');
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+const cheerio = require('cheerio');
 
-async function main() {
-    let list_div = [];
+function parseHTMLContent(htmlContent) {
+    let listDiv = [];
+    const $ = cheerio.load(htmlContent);
 
-    const files = fs.readdirSync('source');
-    for (let i = 0; i < files.length; i++) {
-        const filename = files[i];
-        if (filename.startsWith(path.basename(__filename).split('.')[0]+'-')) {
-            const html_doc = 'source/'+filename;
-            const data = fs.readFileSync(html_doc, 'utf8');
-            const dom = new JSDOM(data);
-            const document = dom.window.document;
-            const divs_name = document.querySelectorAll('div.card-body.p-3.pt-2');
-            divs_name.forEach(div => {
-                const a = div.querySelector('a.h5');
-                const title = a.textContent.trim();
-                const description = div.querySelector('p').textContent.trim();
-                const link = a.href;
-                list_div.push({"title" : title, "description" : description, 'link': link, 'slug': filename});
-            });
-            const divs_name2 = document.querySelectorAll('div.card-body');
-            divs_name2.forEach(div => {
-                try {
-                    const h2 = div.querySelector('h2.card-title');
-                    const title = h2.textContent.trim();
-                    const description = div.querySelector('p').textContent.trim();
-                    const link = h2.querySelector('a').href;
-                    list_div.push({"title" : title, "description" : description, 'link': link, 'slug': filename});
-                } catch (error) {
-                    console.log("Failed during : " + filename);
-                }
-            });
+    $('div.card-body.p-3.pt-2').each((i, div) => {
+        const a = $(div).find('a.h5');
+        const title = a.text().trim();
+        const description = $(div).find('p').text().trim();
+        const link = a.attr('href');
+        listDiv.push({"title": title, "description": description, 'link': link});
+    });
+
+    $('div.card-body').each((i, div) => {
+        const h2 = $(div).find('h2.card-title');
+        if(h2.length > 0) {
+            const title = h2.text().trim();
+            const description = $(div).find('p').text().trim();
+            const link = h2.find('a').attr('href');
+            listDiv.push({"title": title, "description": description, 'link': link});
         }
-    }
-    console.log(list_div);
-    return list_div;
+    });
+
+    return listDiv;
 }
 
-main();
+module.exports = parseHTMLContent;
