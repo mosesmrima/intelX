@@ -1,56 +1,32 @@
-const fs = require('fs');
-const axios = require('axios');
 const cheerio = require('cheerio');
 
-async function main() {
-    let list_div = [];
-    let list_api = [];
+function parseHTMLContent(htmlContent, jsonData) {
+    let listDiv = [];
+    let listApi = [];
+    const $ = cheerio.load(htmlContent);
 
-    const files = fs.readdirSync('source');
-    for (let i = 0; i < files.length; i++) {
-        const filename = files[i];
-        if (filename.startsWith(__filename.split('.')[0] + '-')) {
-            try {
-                const html_doc = 'source/' + filename;
-                const data = fs.readFileSync(html_doc, 'utf8');
-                const $ = cheerio.load(data);
-                
-                if (filename.includes('api')) {
-                    const jsonpart = $('pre').text();
-                    const data = JSON.parse(jsonpart);
-                    for (let entry of data['data']['leaks']) {
-                        const title = entry['title'];
-                        const description = entry['descryption'].trim();
-                        const link = '/leak/' + entry['rndid'];
-                        list_api.push({ "title": title, "description": description, "link": link, "slug": filename });
-                    }
-                } else {
-                    const div = $('div.grid');
-                    const divs_name = div.find('a');
-                    divs_name.each((index, element) => {
-                        const title = $(element).find('div.grid-caption__title').text().trim();
-                        const description = '';
-                        const link = $(element).attr('href');
-                        list_div.push({ "title": title, "description": description, "link": link, "slug": filename });
-                    });
-                }
-            } catch (error) {
-                console.log("Failed during : " + filename);
-            }
-        }
+    for (let entry of jsonData['data']['leaks']) {
+        const title = entry['title'];
+        const description = entry['description'].trim();
+        const link = '/leak/' + entry['rndid'];
+        listApi.push({ "title": title, "description": description, "link": link });
     }
 
-    for (let item of list_div) {
-        for (let apiitem of list_api) {
-            if (item['title'] === apiitem['title']) {
-                item['description'] = apiitem['description'];
-                break;
-            }
-        }
-    }
+    $('div.grid a').each((index, element) => {
+        const title = $(element).find('div.grid-caption__title').text().trim();
+        const description = '';
+        const link = $(element).attr('href');
+        listDiv.push({ "title": title, "description": description, "link": link });
+    });
 
-    console.log(list_div);
-    return list_div;
+    listDiv.forEach(item => {
+        const apiItem = listApi.find(apiItem => apiItem.title === item.title);
+        if (apiItem) {
+            item.description = apiItem.description;
+        }
+    });
+
+    return listDiv;
 }
 
-main();
+module.exports = parseHTMLContent;
