@@ -1,34 +1,20 @@
-const fs = require('fs');
-const path = require('path');
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+const cheerio = require('cheerio');
 
-async function main() {
-    let list_div = [];
-
-    const files = fs.readdirSync('source');
-    for (let i = 0; i < files.length; i++) {
-        const filename = files[i];
-        try {
-            if (filename.startsWith(path.basename(__filename, '.js') + '-')) {
-                const html_doc = path.join('source', filename);
-                const file = fs.readFileSync(html_doc, 'utf-8');
-                const dom = new JSDOM(file);
-                const divs_name = dom.window.document.querySelectorAll('entry');
-                for (let j = 0; j < divs_name.length; j++) {
-                    const div = divs_name[j];
-                    const title = div.textContent.trim();
-                    const desc = new JSDOM(div.children[9].textContent.trim());
-                    const description = desc.window.document.querySelector('p').textContent.trim();
-                    list_div.push({ "title": title, "description": description });
-                }
-            }
-        } catch (error) {
-            console.log("Failed during : " + filename);
+function parseHTMLContent(htmlContent) {
+    let listDiv = [];
+    const $ = cheerio.load(htmlContent);
+    const divsName = $('entry');
+    divsName.each((i, div) => {
+        let title = $(div).children().eq(0).text().trim(); // Adjusted to mimic the BeautifulSoup logic
+        let descriptionContent = $(div).children().eq(9).html(); // Getting inner HTML to process further
+        let description = '';
+        if (descriptionContent) {
+            let desc$ = cheerio.load(descriptionContent);
+            description = desc$('p').text().trim(); // Extracting text from the first <p>
         }
-    }
-    console.log(list_div);
-    return list_div;
+        listDiv.push({"title": title, "description": description});
+    });
+    return listDiv;
 }
 
-main();
+module.exports = parseHTMLContent;
