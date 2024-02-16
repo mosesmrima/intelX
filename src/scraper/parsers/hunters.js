@@ -1,33 +1,18 @@
-const fs = require('fs');
-const path = require('path');
-const axios = require('axios');
 const cheerio = require('cheerio');
 
-async function main() {
-    let list_div = [];
+function parseHTMLContent(htmlContent) {
+    let listDiv = [];
+    const $ = cheerio.load(htmlContent);
+    const divsName = $('div.wrapper.ng-star-inserted');
 
-    const directoryPath = path.join(__dirname, 'source');
-    const files = fs.readdirSync(directoryPath);
+    divsName.each((index, element) => {
+        const title = $(element).find('div.title').text().trim();
+        const description = '';
+        const link = $(element).find('a').attr('href');
+        listDiv.push({ title, description, link });
+    });
 
-    for (let i = 0; i < files.length; i++) {
-        const filename = files[i];
-        if (filename.startsWith(path.basename(__filename).split('.')[0] + '-')) {
-            const html_doc = path.join(directoryPath, filename);
-            const data = fs.readFileSync(html_doc, 'utf8');
-            const $ = cheerio.load(data);
-            const divs_name = $('div.wrapper.ng-star-inserted');
-
-            divs_name.each((index, element) => {
-                const title = $(element).find('div.title').text().trim();
-                const description = '';
-                const link = $(element).find('a').attr('href');
-                list_div.push({ title, description, link, slug: filename });
-            });
-        }
-    }
-
-    console.log(list_div);
-    return list_div;
+    return listDiv;
 }
 
-main();
+module.exports = parseHTMLContent
